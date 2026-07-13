@@ -169,8 +169,7 @@ async function main() {
             name: "Classify Ticket",
             config: {
               promptTemplate:
-                "Classify the following support ticket into a category (billing|bug|cancellation|account|feature_request) and urgency (low|medium|high). Ticket:\n{{ticket.body}}",
-              model: "mock-gpt-4o-mini",
+                "Classify the following support ticket. Respond with ONLY a raw JSON object (no markdown, no code fences) of the shape {\"category\":\"billing|bug|cancellation|account|feature_request\",\"urgency\":\"low|medium|high\",\"confidence\":0.0-1.0}. Ticket:\n{{ticket.body}}",
               temperature: 0.2,
             },
           },
@@ -199,8 +198,7 @@ async function main() {
             name: "Draft Response",
             config: {
               promptTemplate:
-                "Using the ticket, its classification, and the customer record, draft a helpful, empathetic reply that resolves or clearly progresses the issue.",
-              model: "mock-gpt-4o-mini",
+                "Draft a helpful, empathetic support reply (plain text, no markdown, 3-5 sentences) that resolves or clearly progresses the issue.\n\nTicket subject: {{ticket.subject}}\nTicket body: {{ticket.body}}\nClassification: {{steps[1].output.category}} (urgency: {{steps[1].output.urgency}})\nCustomer: {{steps[2].output.name}}, plan: {{steps[2].output.plan}}, tenure: {{steps[2].output.tenureMonths}} months, prior tickets: {{steps[2].output.priorTicketCount}}",
               temperature: 0.4,
             },
           },
@@ -244,7 +242,6 @@ async function main() {
             name: "Summarize Content",
             config: {
               promptTemplate: "Summarize the following article in 2-4 sentences:\n{{article.body}}",
-              model: "mock-gpt-4o-mini",
               temperature: 0.3,
             },
           },
@@ -266,7 +263,6 @@ async function main() {
             name: "Generate Title",
             config: {
               promptTemplate: "Generate a concise, engaging title for this summary:\n{{steps[0].output.raw}}",
-              model: "mock-gpt-4o-mini",
               temperature: 0.5,
             },
           },

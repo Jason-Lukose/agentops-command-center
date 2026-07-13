@@ -45,8 +45,11 @@ function evaluateSafeExpression(expression: string, context: Record<string, unkn
     if (typeof raw !== "string") {
       throw new Error(`JSON.parse target "${parseMatch[1]}" did not resolve to a string`);
     }
+    // Real LLMs often wrap JSON in markdown code fences despite instructions;
+    // strip a single leading/trailing ```...``` fence before parsing.
+    const unfenced = raw.trim().replace(/^```(?:json)?\s*\n?/i, "").replace(/\n?```\s*$/, "");
     try {
-      return JSON.parse(raw);
+      return JSON.parse(unfenced);
     } catch {
       throw new Error(`JSON.parse failed: value at "${parseMatch[1]}" is not valid JSON`);
     }

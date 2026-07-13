@@ -56,11 +56,11 @@ export async function evaluateRubric(
     const name = typeof spec === "string" ? spec : spec.name;
     const weight = typeof spec === "string" ? 1 : spec.weight ?? 1;
     const result = await provider.complete({
-      prompt: `Judge and score the following output on "${name}" from 0 to 1:\n${text}`,
+      prompt: `Judge and score the following output on "${name}" from 0 to 1. Respond with ONLY a raw JSON object (no markdown, no code fences) of the shape {"score": 0.0-1.0}.\nOutput to judge:\n${text}`,
     });
     let score = 0.5;
     try {
-      const parsed = JSON.parse(result.raw);
+      const parsed = JSON.parse(result.raw.trim().replace(/^```(?:json)?\s*\n?/i, "").replace(/\n?```\s*$/, ""));
       if (typeof parsed.score === "number") score = parsed.score;
     } catch {
       // Fall back to neutral score if the provider's completion wasn't parseable JSON.

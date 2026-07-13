@@ -93,8 +93,9 @@ export class OpenAiCompatProvider implements Provider {
       }
       // Permanent client errors (401/403/400/etc.) — never include the API key.
       throw new Error(
-        `OpenAI-compat provider request failed with status ${status}. Check LLM_BASE_URL, ` +
-          `LLM_MODEL, and that LLM_API_KEY is valid for this endpoint.`
+        `OpenAI-compat provider request failed with status ${status} (model: "${req.model ?? this.model}"). ` +
+          `Check LLM_BASE_URL, LLM_MODEL (or a per-step config "model" override), and that ` +
+          `LLM_API_KEY is valid for this endpoint.`
       );
     }
 

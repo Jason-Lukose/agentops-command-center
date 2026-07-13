@@ -93,9 +93,11 @@ The task instructions referenced an "uploaded Framer Motion animation skill." **
 
 ## Recommended Next 3 Improvements
 
-1. **Record a short demo GIF for the README.** The five screenshots are captured (see `app/docs/screenshots/`, re-capturable via `node scripts/capture-screenshots.mjs`); a 15-second GIF of the run→approve→succeeded flow is the remaining visual asset with the highest recruiter impact.
-2. **Add one real LLM provider behind `PROVIDER_MODE`, gated by a human checkpoint.** The `Provider` interface already exists (`src/lib/providers/provider.ts`); implement `OpenAIProvider` (or similar) as a second implementation selected by `PROVIDER_MODE=openai`, requiring the user to explicitly provide an API key in `.env` (never committed) and to approve the external-API checkpoint per `CLAUDE.md` before enabling it by default.
-3. **Add a Playwright e2e test of the guided demo path.** `docs/TEST_PLAN.md` already scopes this (`tests/e2e/demo-path.spec.ts`, optional): create → run → approve → view trace + evals, run against a real (test) Postgres/Redis/dev-server stack, as a regression guard for the exact flow a recruiter will click through.
+1. ~~Record a demo GIF~~ **DONE 2026-07-12** — `app/docs/demo.gif` embedded in the README (`node scripts/record-demo-gif.mjs` to re-record).
+2. ~~Add a real LLM provider~~ **DONE 2026-07-13** — `PROVIDER_MODE=live` with an OpenAI-compat client (Gemini/Groq/OpenRouter free-tier presets in `.env.example`); live-verified end-to-end on Gemini `gemini-flash-lite-latest` (real classification, context-aware draft, approval resume, real rubric scores). Mock remains the keyless default.
+3. ~~Add a Playwright e2e test~~ **DONE 2026-07-12** — `npm run test:e2e` drives dashboard → run demo → approve → succeeded + evals (~10s) against the live local stack.
+
+New recommended next steps: (a) streaming step output into the trace viewer, (b) per-workflow provider/model selection in the builder UI, (c) CI workflow (GitHub Actions: vitest + build; e2e optional against compose services).
 
 ## Resume Bullets
 

@@ -73,7 +73,7 @@ One Next.js package (`app/`) is the single deployable unit. `npm run dev` and `n
 | Data | PostgreSQL 16 + Prisma (typed client, migrations) |
 | Queue | Redis 7 + BullMQ |
 | Worker | `tsx src/worker/index.ts` — second entrypoint, same package |
-| Tests | Vitest (117 unit/integration tests) |
+| Tests | Vitest (135 unit/integration tests) + Playwright e2e |
 | Local infra | Docker Compose (Postgres + Redis only) |
 
 ## Quickstart
@@ -113,18 +113,19 @@ Total: dashboard → trace → run → approve → evaluations, no API keys, rou
 
 ## Testing
 
-117 tests across the runner, all 5 step executors, all 3 evaluators, the mock provider, and the API routes (workflows, runs, approve/reject, dashboard):
+135 tests across the runner, all 5 step executors, all 3 evaluators, the mock provider, and the API routes (workflows, runs, approve/reject, dashboard):
 
 ```bash
-npm test          # vitest run — 117/117 passing
+npm test          # vitest run — 135/135 passing
 npx tsc --noEmit  # clean
 npm run lint      # clean
 npm run build     # production build succeeds
+npm run test:e2e  # Playwright: the full demo path against the live local stack
 ```
 
 ## Limitations
 
-- **Mock provider only.** `PROVIDER_MODE=mock` is the only shipped provider — there is no real LLM call anywhere in this repo. The `Provider` interface (`src/lib/providers/provider.ts`) is a documented seam for adding a real provider later; wiring one up is a deliberate post-MVP step that requires an API key (a human checkpoint under this project's own rules).
+- **Mock provider by default.** `PROVIDER_MODE=mock` runs the whole demo with zero API keys. A real provider is shipped and live-verified: set `PROVIDER_MODE=live` plus the `LLM_*` vars (see `.env.example` — free-tier presets for Google Gemini, Groq, and OpenRouter; verified end-to-end on Gemini `gemini-flash-lite-latest`, including real classification JSON, context-aware drafts, and real rubric judge scores). Your key lives in `.env` and is never committed.
 - **No authentication.** Single local user, no accounts, no multi-tenancy — by design, not an oversight. Not intended for public/internet deployment as-is.
 - **Polling, not WebSockets.** The trace viewer polls `GET /api/runs/{id}` every 2 seconds until the run reaches a terminal status. Fine for one local viewer; would need a realtime transport for many concurrent viewers.
 - **Dark mode only.** Light mode was deferred to keep the design system scope small for the MVP.

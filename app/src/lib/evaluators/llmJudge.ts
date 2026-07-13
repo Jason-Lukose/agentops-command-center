@@ -21,13 +21,13 @@ export async function evaluateLlmJudge(
   const threshold = config.threshold ?? 0.7;
 
   const result = await provider.complete({
-    prompt: `Judge the following output against this rubric: ${rubric}\nOutput:\n${text}`,
+    prompt: `Judge the following output against this rubric: ${rubric}\nRespond with ONLY a raw JSON object (no markdown, no code fences) of the shape {"score": 0.0-1.0, "rationale": "one sentence"}.\nOutput to judge:\n${text}`,
   });
 
   let score = 0.5;
   let rationale = "unparseable judge completion; defaulted to neutral score";
   try {
-    const parsed = JSON.parse(result.raw);
+    const parsed = JSON.parse(result.raw.trim().replace(/^```(?:json)?\s*\n?/i, "").replace(/\n?```\s*$/, ""));
     if (typeof parsed.score === "number") score = parsed.score;
     if (typeof parsed.rationale === "string") rationale = parsed.rationale;
   } catch {
