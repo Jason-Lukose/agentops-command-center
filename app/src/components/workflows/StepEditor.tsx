@@ -1,12 +1,12 @@
 "use client";
 
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ChevronDown, ChevronUp, Trash2 } from "lucide-react";
 import { useId, useRef, useState } from "react";
 import { STEP_TYPES } from "@/components/types";
 import type { StepType } from "@/components/types";
 import { STEP_ICONS } from "@/components/workflows/WorkflowCard";
-import { listItem, pressScale } from "@/lib/motion";
+import { listItem, pressScale, springBouncy } from "@/lib/motion";
 
 export interface DraftStep {
   key: string;
@@ -69,6 +69,8 @@ export function StepEditor({
     ]);
   }
 
+  const reduce = useReducedMotion();
+
   return (
     <div className="flex flex-col gap-3">
       <AnimatePresence initial={false}>
@@ -79,6 +81,7 @@ export function StepEditor({
             <motion.div
               key={step.key}
               layout
+              transition={{ layout: reduce ? { duration: 0 } : springBouncy }}
               variants={listItem}
               initial="hidden"
               animate="visible"
@@ -86,9 +89,13 @@ export function StepEditor({
               className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-4"
             >
               <div className="flex items-start gap-3">
-                <span className="mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-[var(--color-muted)] text-[var(--color-foreground-muted)]">
+                <motion.span
+                  whileHover={reduce ? undefined : { rotate: 12 }}
+                  transition={{ duration: 0.15 }}
+                  className="mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-[var(--color-muted)] text-[var(--color-foreground-muted)]"
+                >
                   <Icon size={15} strokeWidth={1.75} />
-                </span>
+                </motion.span>
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
                     <span className="rounded bg-[var(--color-muted)] px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-[var(--color-foreground-muted)]">

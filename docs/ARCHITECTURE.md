@@ -103,9 +103,9 @@ Two host processes (`dev` + `worker`) share one `.env`, one Prisma client, one q
 |---|---|---|---|
 | PostgreSQL (local Docker) | Persistence | $0 | `DATABASE_URL` |
 | Redis (local Docker) | Job queue | $0 | `REDIS_URL` |
-| LLM provider | Step execution / judge | $0 in MVP — `PROVIDER_MODE=mock` (no key). Real keys = human checkpoint. | `PROVIDER_MODE` (`mock`) |
+| LLM provider | Step execution / judge | $0 — `PROVIDER_MODE=mock` (default, no key) or `PROVIDER_MODE=live` against a free-tier OpenAI-compatible endpoint (Gemini/Groq/OpenRouter). | `PROVIDER_MODE` (`mock`\|`live`), `LLM_BASE_URL`, `LLM_API_KEY`, `LLM_MODEL` |
 
-No paid or networked service is required to run the MVP. Switching `PROVIDER_MODE` to a real provider is a human checkpoint (external API + API key).
+No paid or networked service is required to run the MVP; the default `PROVIDER_MODE=mock` needs zero API keys. `PROVIDER_MODE=live` uses `src/lib/providers/openaiCompatProvider.ts` — a single plain-`fetch` client (no vendor SDK) against any OpenAI-compatible `/chat/completions` endpoint, covering Google Gemini's OpenAI-compat endpoint, Groq, and OpenRouter free models via `LLM_BASE_URL`/`LLM_MODEL` alone (see `.env.example` for presets). Flipping to `live` and supplying a real key remains a human checkpoint (external API + API key) — see docs/DECISIONS.md 2026-07-12.
 
 ## Deliberate Simplifications
 
@@ -114,4 +114,4 @@ No paid or networked service is required to run the MVP. Switching `PROVIDER_MOD
 - **Worker in the same package** — revisit only if worker load needs independent scaling/deploy.
 - **No repository/service abstraction** — call Prisma directly from handlers/runner until a second data backend exists.
 - **Ordered-list workflow builder, not a drag-and-drop canvas** — revisit if branching/parallel steps enter scope.
-- **Mock provider default** — real LLM calls deferred behind the Provider interface; flip via `PROVIDER_MODE`.
+- **Mock provider default** — real LLM calls deferred behind the Provider interface; flip via `PROVIDER_MODE=live` (free-tier OpenAI-compatible endpoint, see `.env.example`).

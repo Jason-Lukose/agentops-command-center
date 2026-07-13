@@ -114,3 +114,23 @@ body {
     animation: none;
   }
 }
+
+/* Live-polling row shimmer (runs list / dashboard recent runs, non-terminal
+   statuses only) — opacity-only keyframe, matches .skeleton/.status-pulse. */
+@keyframes row-shimmer {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.72;
+  }
+}
+.row-shimmer {
+  animation: row-shimmer 1.8s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .row-shimmer {
+    animation: none;
+  }
+}

@@ -4,21 +4,27 @@ A full-stack AI workflow observability & evaluation platform — a lightweight L
 
 Design a multi-step agent workflow, run it against a mock LLM/tool provider, watch it execute in a background worker, pause it at a human-approval checkpoint, and inspect a developer-grade trace with per-step latency, retries, and evaluation scores — all backed by Postgres and BullMQ.
 
+## Demo
+
+![Demo: run a workflow, approve at the checkpoint, watch it succeed](docs/demo.gif)
+
+*The 30-second story: run the seeded triage pipeline → it pauses at the human-approval checkpoint → approve → it resumes and succeeds with evaluation scores. Re-record anytime with `node scripts/record-demo-gif.mjs`.*
+
 ## Screenshots
 
 > Captured live from the seeded local app (1440×900, dark). Re-capture anytime with `node scripts/capture-screenshots.mjs` (dev server + worker running).
 
 | Dashboard | Trace viewer |
 |---|---|
-| `docs/screenshots/dashboard.png` | `docs/screenshots/trace-viewer.png` |
+| ![Dashboard](docs/screenshots/dashboard.png) | ![Trace viewer](docs/screenshots/trace-viewer.png) |
 
 | Workflow builder | Evaluations |
 |---|---|
-| `docs/screenshots/builder.png` | `docs/screenshots/evaluations.png` |
+| ![Workflow builder](docs/screenshots/builder.png) | ![Evaluations](docs/screenshots/evaluations.png) |
 
-| Approval checkpoint |
-|---|
-| `docs/screenshots/approval.png` |
+| Approval checkpoint | |
+|---|---|
+| ![Approval checkpoint](docs/screenshots/approval.png) | |
 
 ## Features
 

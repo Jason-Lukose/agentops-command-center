@@ -1,6 +1,6 @@
 "use client";
 
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
   CheckCircle2,
   CircleDashed,
@@ -10,7 +10,7 @@ import {
   XCircle,
 } from "lucide-react";
 import type { RunStatus, StepStatus } from "@/components/types";
-import { duration } from "@/lib/motion";
+import { duration, glowPulse } from "@/lib/motion";
 import { titleCase } from "@/lib/format";
 
 type Status = RunStatus | StepStatus;
@@ -69,6 +69,7 @@ export function StatusBadge({ status, className = "" }: { status: Status; classN
     Icon: CircleDashed,
   };
   const { Icon } = meta;
+  const reduce = useReducedMotion();
   return (
     <AnimatePresence mode="wait" initial={false}>
       <motion.span
@@ -77,8 +78,18 @@ export function StatusBadge({ status, className = "" }: { status: Status; classN
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ duration: duration.fast }}
-        className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-xs font-medium ${meta.className} ${className}`}
+        className={`relative inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-xs font-medium ${meta.className} ${className}`}
       >
+        {meta.pulse && !reduce && (
+          <motion.span
+            aria-hidden
+            className="pointer-events-none absolute inset-0 rounded-full"
+            style={{ boxShadow: "0 0 0 3px var(--color-info)" }}
+            variants={glowPulse}
+            initial="hidden"
+            animate="visible"
+          />
+        )}
         <Icon
           size={12}
           strokeWidth={2}

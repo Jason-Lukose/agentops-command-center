@@ -3,7 +3,7 @@
 import useSWR from "swr";
 import { useState } from "react";
 import Link from "next/link";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { CheckCircle2, ChevronRight, ClipboardCheck, XCircle } from "lucide-react";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ErrorState } from "@/components/ui/ErrorState";
@@ -12,7 +12,7 @@ import { JsonPanel } from "@/components/ui/JsonPanel";
 import { Sparkline } from "@/components/ui/Sparkline";
 import { fetcher } from "@/lib/fetcher";
 import { formatPercent, formatScore, relativeTime, titleCase } from "@/lib/format";
-import { spring } from "@/lib/motion";
+import { rowContainer, rowItem, spring, useCountUp } from "@/lib/motion";
 import type { EvaluationResult, EvaluatorType } from "@/components/types";
 
 const EVALUATOR_TYPES: EvaluatorType[] = ["deterministic", "rubric", "llm_judge"];
@@ -67,8 +67,18 @@ export default function EvaluationsPage() {
   return (
     <div className="flex flex-col gap-8">
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <SummaryTile label="Total evaluations" value={evaluations.length.toLocaleString()} />
-        <SummaryTile label="Pass rate" value={formatPercent(passRate)} />
+        <SummaryTile
+          label="Total evaluations"
+          value={evaluations.length.toLocaleString()}
+          countTo={evaluations.length}
+          format={(n) => Math.round(n).toLocaleString()}
+        />
+        <SummaryTile
+          label="Pass rate"
+          value={formatPercent(passRate)}
+          countTo={passRate}
+          format={(n) => formatPercent(n)}
+        />
         {EVALUATOR_TYPES.map((t) => {
           const forType = evaluations.filter((e) => e.evaluatorType === t);
           const avg =
@@ -88,21 +98,36 @@ export default function EvaluationsPage() {
 
       <section>
         <h2 className="mb-3 text-base font-semibold">Recent results</h2>
-        <div className="flex flex-col gap-2">
+        <motion.div variants={rowContainer} initial="hidden" animate="visible" className="flex flex-col gap-2">
           {recent.map((ev) => (
             <EvalRow key={ev.id} ev={ev} />
           ))}
-        </div>
+        </motion.div>
       </section>
     </div>
   );
 }
 
-function SummaryTile({ label, value, sub }: { label: string; value: string; sub?: string }) {
+function SummaryTile({
+  label,
+  value,
+  sub,
+  countTo,
+  format,
+}: {
+  label: string;
+  value: string;
+  sub?: string;
+  countTo?: number;
+  format?: (n: number) => string;
+}) {
+  const reduce = useReducedMotion();
+  const counted = useCountUp(countTo ?? 0, reduce || countTo === undefined);
+  const shown = countTo !== undefined && format ? format(counted) : value;
   return (
     <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
       <p className="text-xs text-[var(--color-foreground-muted)]">{label}</p>
-      <p className="tabular-nums mt-1 text-xl font-semibold">{value}</p>
+      <p className="tabular-nums mt-1 text-xl font-semibold">{shown}</p>
       {sub && <p className="text-xs text-[var(--color-foreground-muted)]">{sub}</p>}
     </div>
   );
@@ -111,7 +136,7 @@ function SummaryTile({ label, value, sub }: { label: string; value: string; sub?
 function EvalRow({ ev }: { ev: EvaluationResult }) {
   const [open, setOpen] = useState(false);
   return (
-    <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)]">
+    <motion.div variants={rowItem} className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)]">
       <button
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
@@ -151,6 +176,6 @@ function EvalRow({ ev }: { ev: EvaluationResult }) {
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </motion.div>
   );
 }

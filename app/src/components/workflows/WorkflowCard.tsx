@@ -4,8 +4,8 @@ import Link from "next/link";
 import { Bot, Wrench, Shuffle, UserCheck, ClipboardCheck } from "lucide-react";
 import type { StepType, WorkflowSummary } from "@/components/types";
 import { relativeTime } from "@/lib/format";
-import { motion } from "framer-motion";
-import { staggerItem } from "@/lib/motion";
+import { motion, useReducedMotion } from "framer-motion";
+import { cardHover, cardTap, staggerItem } from "@/lib/motion";
 
 const STEP_ICONS: Record<StepType, typeof Bot> = {
   llm_prompt: Bot,
@@ -22,11 +22,16 @@ export function WorkflowCard({
   workflow: WorkflowSummary;
   stepTypes?: StepType[];
 }) {
+  const reduce = useReducedMotion();
   return (
-    <motion.div variants={staggerItem}>
+    <motion.div
+      variants={staggerItem}
+      whileHover={reduce ? undefined : cardHover}
+      whileTap={reduce ? undefined : cardTap}
+    >
       <Link
         href={`/workflows/${workflow.id}`}
-        className="flex flex-col gap-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-4 transition-colors hover:border-[var(--color-border-strong)]"
+        className="flex cursor-pointer flex-col gap-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-4 transition-[border-color,box-shadow] duration-150 hover:border-[var(--color-accent)] hover:shadow-[0_0_0_1px_var(--color-accent),0_8px_24px_-12px_rgba(0,0,0,0.5)]"
       >
         <div className="flex items-start justify-between">
           <div>

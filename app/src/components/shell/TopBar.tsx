@@ -32,7 +32,7 @@ export function TopBar() {
       </div>
       <div className="flex items-center gap-3 px-2">
         <span className="hidden items-center gap-1.5 rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-2.5 py-1 text-xs text-[var(--color-foreground-muted)] sm:flex">
-          <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-accent)]" />
+          <span className="status-pulse h-1.5 w-1.5 rounded-full bg-[var(--color-accent)]" />
           Local &middot; Mock Provider
         </span>
         <button

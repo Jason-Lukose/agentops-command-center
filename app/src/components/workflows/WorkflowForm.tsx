@@ -1,12 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Play, Save } from "lucide-react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { Check, Play, Save } from "lucide-react";
 import { StepEditor, type DraftStep } from "@/components/workflows/StepEditor";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { RunWorkflowModal } from "@/components/workflows/RunWorkflowModal";
 import { postJson, putJson, ApiRequestError } from "@/lib/fetcher";
+import { duration } from "@/lib/motion";
 import type { Workflow } from "@/components/types";
 
 export function WorkflowForm({ workflow }: { workflow?: Workflow }) {
@@ -27,6 +29,9 @@ export function WorkflowForm({ workflow }: { workflow?: Workflow }) {
   const [saveError, setSaveError] = useState<string | null>(null);
   const [savedId, setSavedId] = useState<string | null>(workflow?.id ?? null);
   const [runModalOpen, setRunModalOpen] = useState(false);
+  const [justSaved, setJustSaved] = useState(false);
+  const reduce = useReducedMotion();
+  const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   function validate(): boolean {
     let ok = true;
@@ -65,6 +70,9 @@ export function WorkflowForm({ workflow }: { workflow?: Workflow }) {
         setSavedId(res.workflow.id);
         router.replace(`/workflows/${res.workflow.id}`);
       }
+      setJustSaved(true);
+      if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
+      savedTimerRef.current = setTimeout(() => setJustSaved(false), 1500);
     } catch (e) {
       setSaveError(e instanceof ApiRequestError ? e.message : "Failed to save workflow.");
     } finally {
@@ -123,12 +131,45 @@ export function WorkflowForm({ workflow }: { workflow?: Workflow }) {
           disabled={saving}
           className="inline-flex items-center gap-2 rounded-md bg-[var(--color-accent)] px-4 py-2 text-sm font-medium text-[var(--color-accent-foreground)] transition-transform disabled:opacity-60 active:scale-[0.98]"
         >
-          {saving ? (
-            <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" />
-          ) : (
-            <Save size={15} />
-          )}
-          Save workflow
+          <AnimatePresence mode="wait" initial={false}>
+            {saving ? (
+              <motion.span
+                key="saving"
+                initial={reduce ? false : { opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: duration.fast }}
+                className="flex items-center gap-2"
+              >
+                <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                Save workflow
+              </motion.span>
+            ) : justSaved ? (
+              <motion.span
+                key="saved"
+                initial={reduce ? false : { opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: duration.fast }}
+                className="flex items-center gap-2"
+              >
+                <Check size={15} />
+                Saved
+              </motion.span>
+            ) : (
+              <motion.span
+                key="idle"
+                initial={reduce ? false : { opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: duration.fast }}
+                className="flex items-center gap-2"
+              >
+                <Save size={15} />
+                Save workflow
+              </motion.span>
+            )}
+          </AnimatePresence>
         </button>
         <button
           onClick={() => setRunModalOpen(true)}

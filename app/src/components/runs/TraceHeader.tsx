@@ -1,9 +1,9 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { formatCost, formatLatency, formatTokens, relativeTime } from "@/lib/format";
-import { resultReveal } from "@/lib/motion";
+import { checkDraw, resultReveal, shakeOnce } from "@/lib/motion";
 import type { Run, StepExecution } from "@/components/types";
 
 export function TraceHeader({
@@ -19,6 +19,7 @@ export function TraceHeader({
   const totalTokensOut = steps.reduce((s, x) => s + (x.tokensOut ?? 0), 0);
   const totalCost = steps.reduce((s, x) => s + Number(x.costEstimate ?? 0), 0);
   const isTerminal = ["succeeded", "failed", "canceled"].includes(run.status);
+  const reduce = useReducedMotion();
 
   return (
     <motion.div
@@ -34,7 +35,29 @@ export function TraceHeader({
           </p>
           <h2 className="mt-0.5 font-mono text-sm text-[var(--color-foreground-muted)]">{run.id}</h2>
         </div>
-        <StatusBadge status={run.status} className="text-sm" />
+        <div className="flex items-center gap-2">
+          {run.status === "succeeded" && (
+            <motion.svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              aria-hidden
+              initial={reduce ? false : "hidden"}
+              animate="visible"
+            >
+              <motion.path
+                d="M5 13l4 4L19 7"
+                stroke="var(--color-accent)"
+                strokeWidth={2.5}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                variants={checkDraw}
+              />
+            </motion.svg>
+          )}
+          <StatusBadge status={run.status} className="text-sm" />
+        </div>
       </div>
 
       {run.status === "queued" && (
@@ -45,9 +68,13 @@ export function TraceHeader({
       )}
 
       {run.status === "failed" && run.errorMessage && (
-        <p className="mt-3 rounded-md border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-200">
+        <motion.p
+          initial={reduce ? false : { opacity: 0 }}
+          animate={reduce ? { opacity: 1 } : { opacity: 1, ...shakeOnce }}
+          className="mt-3 rounded-md border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-200"
+        >
           {run.errorMessage}
-        </p>
+        </motion.p>
       )}
 
       <dl className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-5">

@@ -8,7 +8,7 @@ import { JsonPanel } from "@/components/ui/JsonPanel";
 import { ApprovalActions } from "@/components/runs/ApprovalActions";
 import { STEP_ICONS } from "@/components/workflows/WorkflowCard";
 import { formatCost, formatLatency, formatTokens, titleCase } from "@/lib/format";
-import { spring, duration } from "@/lib/motion";
+import { springBouncy, duration, shakeOnce, staggerItem } from "@/lib/motion";
 import type { StepExecution, StepType } from "@/components/types";
 
 export function StepCard({
@@ -32,12 +32,19 @@ export function StepCard({
   const hasCost = step.tokensIn != null || step.tokensOut != null || step.costEstimate != null;
 
   return (
-    <div className="relative flex gap-4">
+    <motion.div variants={staggerItem} className="relative flex gap-4">
       <div className="flex flex-col items-center">
         <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-foreground-muted)]">
           <Icon size={15} strokeWidth={1.75} />
         </span>
-        <span className="mt-1 w-px flex-1 bg-[var(--color-border)]" aria-hidden />
+        <motion.span
+          className="mt-1 w-px flex-1 bg-[var(--color-border)]"
+          style={{ transformOrigin: "top" }}
+          initial={reduce ? false : { scaleY: 0 }}
+          animate={{ scaleY: 1 }}
+          transition={{ duration: duration.base, ease: [0.16, 1, 0.3, 1], delay: reduce ? 0 : 0.1 }}
+          aria-hidden
+        />
       </div>
 
       <div className="mb-5 flex-1">
@@ -75,7 +82,7 @@ export function StepCard({
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
-              transition={reduce ? { duration: 0 } : spring}
+              transition={reduce ? { duration: 0 } : springBouncy}
               className="overflow-hidden"
             >
               <div className="mt-2 flex flex-col gap-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-background)] p-4">
@@ -96,13 +103,22 @@ export function StepCard({
                   </div>
                 )}
 
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <motion.div
+                  initial={reduce ? false : { opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: duration.base, ease: [0.16, 1, 0.3, 1] }}
+                  className="grid grid-cols-1 gap-3 sm:grid-cols-2"
+                >
                   <JsonPanel label="Input" value={step.input} />
                   <JsonPanel label="Output" value={step.output} />
-                </div>
+                </motion.div>
 
                 {step.status === "failed" && (
-                  <div className="flex items-start gap-2 rounded-md border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-200">
+                  <motion.div
+                    initial={reduce ? false : { opacity: 0 }}
+                    animate={reduce ? { opacity: 1 } : { opacity: 1, ...shakeOnce }}
+                    className="flex items-start gap-2 rounded-md border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-200"
+                  >
                     <RotateCw size={14} className="mt-0.5 shrink-0" />
                     <div>
                       <p className="font-medium">Step failed</p>
@@ -115,7 +131,7 @@ export function StepCard({
                         </p>
                       )}
                     </div>
-                  </div>
+                  </motion.div>
                 )}
 
                 {step.status === "awaiting_approval" && (
@@ -132,6 +148,6 @@ export function StepCard({
           )}
         </AnimatePresence>
       </div>
-    </div>
+    </motion.div>
   );
 }

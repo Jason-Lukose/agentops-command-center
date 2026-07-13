@@ -2,12 +2,14 @@
 
 import useSWR from "swr";
 import { useParams } from "next/navigation";
+import { motion } from "framer-motion";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { TraceHeader } from "@/components/runs/TraceHeader";
 import { StepCard } from "@/components/runs/StepCard";
 import { EvalResultsSection } from "@/components/runs/EvalResultsSection";
 import { fetcher } from "@/lib/fetcher";
+import { staggerContainer } from "@/lib/motion";
 import type { RunDetail, Workflow } from "@/components/types";
 
 const TERMINAL = new Set(["succeeded", "failed", "canceled"]);
@@ -68,7 +70,12 @@ export default function RunTracePage() {
             No steps have started yet.
           </p>
         ) : (
-          <div className="flex flex-col">
+          <motion.div
+            variants={staggerContainer}
+            initial="hidden"
+            animate="visible"
+            className="flex flex-col"
+          >
             {orderedSteps.map((step, i) => (
               <StepCard
                 key={step.id}
@@ -78,7 +85,7 @@ export default function RunTracePage() {
                 stepDef={stepDefsById.get(step.stepId)}
               />
             ))}
-          </div>
+          </motion.div>
         )}
       </section>
 

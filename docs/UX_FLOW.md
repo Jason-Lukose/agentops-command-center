@@ -134,3 +134,15 @@ Constraints: max 1–2 animated elements per view moment; interruptible; never i
 
 ### Accessibility gate (per skill §1)
 4.5:1 text contrast on all pairs above; visible focus rings (2px accent offset); full keyboard nav incl. expandable cards and modal escape/focus trap; `aria-live="polite"` for run-status polling updates; heading hierarchy; sortable-table `aria-sort`.
+
+### Intensified pass — 2026-07-12
+Motion dial moved from ~4/10 to ~6-7/10 per explicit request ("the website should feel alive"). All additions stay inside the existing token system (`src/lib/motion.ts`): transform/opacity only (`pathLength` for SVG checkmarks), gated by `useReducedMotion()`/`prefers-reduced-motion`, ≤500ms, interruptible, no CLS. New tokens added: `springBouncy` (livelier expand/collapse + reorder, still <400ms settle), `rowContainer`/`rowItem` (faster table-row cascade), `cardHover`/`cardTap` (lift + press), `growBar` (sparkline/eval bar draw-in), `shakeOnce` (failure reveal), `checkDraw` (success checkmark path draw), `glowPulse` (opacity-only breathing glow, never animates `box-shadow` directly), `useCountUp` (number count-up hook, jumps to target under reduced motion). `fadeRise` travel bumped 8px → 12px.
+
+Per-page additions:
+- **Dashboard**: metric cards count up on value change + hover lift/press; recent-runs table rows cascade in and animate on refresh (`AnimatePresence` + `layout`); non-terminal rows get a subtle opacity shimmer; sparkline bars draw in staggered; topbar status dot pulses.
+- **Trace viewer**: step cards stagger-mount with a connector line that grows in (scaleY, origin-top); expand/collapse uses `springBouncy`; JSON panels crossfade+rise on expand; running badge gets a breathing glow (opacity-only overlay); success reveal draws an animated checkmark (SVG `pathLength`) next to the status badge; failure reveal (run-level and per-step error panels) does a once-only 300ms shake.
+- **Workflow builder**: step cards get a bouncier layout spring on reorder; type icons micro-rotate on hover; Save button crossfades its label to a checkmark + "Saved" on success.
+- **Workflows list**: card grid stagger unchanged; cards now lift + glow the border accent color on hover.
+- **Runs list**: same row-cascade + shimmer pattern as the dashboard's recent-runs table.
+- **Evaluations**: score-history bars draw in staggered (shared `Sparkline` component — same fix covers the dashboard eval summary); pass-rate/total tiles count up; result rows cascade in.
+- **Sidebar/shell**: nav icons micro-scale on hover (CSS `group-hover`, respects `motion-reduce:`); active-indicator `layoutId` slide was already present; page-content transitions now travel 12px instead of 8px.

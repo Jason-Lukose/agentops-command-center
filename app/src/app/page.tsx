@@ -76,22 +76,38 @@ export default function DashboardPage() {
             animate="visible"
             className="grid grid-cols-2 gap-4 lg:grid-cols-4"
           >
-            <MetricCard label="Total Runs" value={totals.runs.toLocaleString()} icon={Activity} />
+            <MetricCard
+              label="Total Runs"
+              value={totals.runs.toLocaleString()}
+              icon={Activity}
+              countTo={totals.runs}
+              format={(n) => Math.round(n).toLocaleString()}
+            />
             <MetricCard
               label="Success Rate"
               value={formatPercent(totals.successRate)}
               icon={CheckCircle2}
+              countTo={totals.successRate}
+              format={(n) => formatPercent(n)}
               trend={{
                 direction: totals.successRate >= 0.9 ? "up" : "down",
                 label: `${totals.succeeded} succeeded`,
                 positive: totals.successRate >= 0.9,
               }}
             />
-            <MetricCard label="Avg Latency" value={formatLatency(data?.avgLatencyMs)} icon={Gauge} />
+            <MetricCard
+              label="Avg Latency"
+              value={formatLatency(data?.avgLatencyMs)}
+              icon={Gauge}
+              countTo={data?.avgLatencyMs ?? 0}
+              format={(n) => formatLatency(Math.round(n))}
+            />
             <MetricCard
               label="Failed Steps"
               value={(data?.failedStepCount ?? 0).toLocaleString()}
               icon={XOctagon}
+              countTo={data?.failedStepCount ?? 0}
+              format={(n) => Math.round(n).toLocaleString()}
             />
           </motion.div>
 

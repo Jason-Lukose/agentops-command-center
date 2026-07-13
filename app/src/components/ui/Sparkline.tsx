@@ -1,3 +1,8 @@
+"use client";
+
+import { motion, useReducedMotion } from "framer-motion";
+import { growBar } from "@/lib/motion";
+
 /** Minimal inline SVG bar sparkline — no chart library. */
 export function Sparkline({
   values,
@@ -10,6 +15,8 @@ export function Sparkline({
   height?: number;
   passed?: boolean[];
 }) {
+  const reduce = useReducedMotion();
+
   if (values.length === 0) {
     return (
       <div
@@ -33,7 +40,7 @@ export function Sparkline({
               ? "var(--color-accent)"
               : "var(--color-destructive)";
         return (
-          <rect
+          <motion.rect
             key={i}
             x={i * barWidth + 1}
             y={height - barHeight}
@@ -41,6 +48,11 @@ export function Sparkline({
             height={barHeight}
             fill={color}
             rx={1}
+            style={{ transformOrigin: `bottom`, transformBox: "fill-box" }}
+            custom={i}
+            variants={reduce ? undefined : growBar}
+            initial={reduce ? undefined : "hidden"}
+            animate={reduce ? undefined : "visible"}
           />
         );
       })}

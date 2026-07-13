@@ -32,7 +32,7 @@ export function Sidebar() {
               key={item.href}
               href={item.href}
               title={item.label}
-              className="relative flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-[var(--color-foreground-muted)] transition-colors hover:bg-[var(--color-muted)] hover:text-[var(--color-foreground)]"
+              className="group relative flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-[var(--color-foreground-muted)] transition-colors hover:bg-[var(--color-muted)] hover:text-[var(--color-foreground)]"
               aria-current={active ? "page" : undefined}
             >
               {active && (
@@ -52,7 +52,7 @@ export function Sidebar() {
               <Icon
                 size={18}
                 strokeWidth={1.75}
-                className={`relative shrink-0 ${active ? "text-[var(--color-foreground)]" : ""}`}
+                className={`relative shrink-0 transition-transform duration-150 ease-out group-hover:scale-110 motion-reduce:group-hover:scale-100 ${active ? "text-[var(--color-foreground)]" : ""}`}
               />
               <span className={`relative hidden xl:inline ${active ? "text-[var(--color-foreground)]" : ""}`}>
                 {item.label}

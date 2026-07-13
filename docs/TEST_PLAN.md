@@ -9,7 +9,7 @@
 cd app
 npm test               # Vitest, all
 npm test -- --watch    # watch mode
-npm run test:e2e       # Playwright (optional, one golden path) — deferred
+npm run test:e2e       # Playwright, one golden path (see "Playwright e2e" section below)
 ```
 
 ## Test Strategy
@@ -57,7 +57,52 @@ src/
    ├─ reject.route.test.ts                 # reject fails; wrong state → 409
    └─ dashboard.route.test.ts              # aggregate math; successRate excludes canceled (B10 regression)
 ```
-Playwright e2e (`npm run test:e2e`) remains deferred — not implemented (see `docs/HANDOFF.md`).
+Playwright e2e (`npm run test:e2e`) is now implemented — see the "Playwright e2e" section below.
+
+## Playwright e2e
+
+`app/e2e/demo-path.spec.ts` covers the exact recruiter demo path end-to-end against a **live** local
+stack (Chromium only, via `@playwright/test`). It is intentionally the one golden path, not broad
+coverage — Vitest owns the thick coverage; this is a regression guard for the single flow a recruiter
+will actually click through.
+
+**Stack prerequisites — this suite does NOT start anything for you.** `app/playwright.config.ts` has no
+`webServer` block by design (the worker is a separate long-lived process that Playwright's single-process
+`webServer` orchestration doesn't fit well). Before running `npm run test:e2e`, in separate terminals from
+`app/`:
+1. `docker compose up -d` — Postgres (`:5433`) + Redis
+2. `npx prisma migrate dev` (first run only) then `npm run db:seed`
+3. `npm run dev` — Next.js dev server on `:3000`
+4. `npm run worker` — BullMQ worker (the run will hang at `queued` forever without this)
+
+Then: `npm run test:e2e` (equivalently `npx playwright test`).
+
+If `:3000` isn't reachable, the spec fails fast in `test.beforeAll` with an explicit message telling you
+which of the above you forgot, rather than every assertion timing out opaquely one by one.
+
+**What it asserts** (`app/e2e/demo-path.spec.ts`):
+1. `/` — dashboard metric cards (Total Runs, Success Rate, etc.) and the recent-runs table render.
+2. "Run demo workflow" → modal resolves the seeded Support Ticket Triage Pipeline with a prefilled,
+   valid-JSON `{ticket: {...}}` sample input.
+3. Submitting navigates to `/runs/{id}`.
+4. The run reaches the `Awaiting Approval` status badge (polled every 2s by the app; asserted with a
+   generous 60s timeout to absorb mock-provider retry latency).
+5. Clicking the "Human Review" step row expands it (steps only auto-expand on initial mount if already
+   `awaiting_approval`/`failed` — a step that transitions into that status later via polling stays
+   collapsed until clicked; this matches `scripts/capture-screenshots.mjs`'s existing behavior, so it is
+   documented UI behavior, not a workaround), then Approve is clicked.
+6. The run reaches `Succeeded` (60s timeout).
+7. The trace shows all 6 triage-pipeline steps (`#1`..`#6`, no `#7`) and at least one
+   "Evaluation results" entry with a Passed/Failed outcome.
+
+**Flake handling:** the mock provider intentionally fails ~8% of individual step calls to exercise retry
+behavior; with 3 retries/step, FINAL_HANDOFF.md documents the residual full-run failure probability at
+~0.2%. `test.describe.configure({ retries: 1 })` absorbs that rare flake without softening any assertion —
+a second consecutive failure is a real regression, not noise.
+
+**Selector strategy:** roles + accessible names + visible text only (no CSS/`nth-child`), and no assertions
+on transient animation state — Playwright's built-in auto-waiting handles the app's Framer Motion
+transitions without the spec needing to know their timing.
 
 ## Coverage Map (fills in as requirements land; illustrative)
 | Area | Acceptance criterion | Test |
@@ -68,8 +113,27 @@ Playwright e2e (`npm run test:e2e`) remains deferred — not implemented (see `d
 | Rubric scoring | Weighted score computed correctly at threshold | `src/lib/__tests__/evaluators.rubric.test.ts` |
 | Input validation | Bad body → 400 `validation_error` | `src/app/api/__tests__/workflows.route.test.ts` |
 | Dashboard | Success rate / avg latency / failed steps correct | `src/app/api/__tests__/dashboard.route.test.ts` |
+| Guided demo path (dashboard → run → approve → succeeded trace + evals) | The exact recruiter demo flow works end-to-end against a live stack | `e2e/demo-path.spec.ts` |
 
 ## Status (updated by qa-tester)
+- **2026-07-12 — Playwright e2e added.** `app/e2e/demo-path.spec.ts` + `app/playwright.config.ts`
+  (`@playwright/test` added as a devDependency; the `playwright` library + Chromium were already
+  installed for `scripts/capture-screenshots.mjs`, so no new browser download was needed). Run live
+  against the running dev server + worker + Docker Postgres/Redis: **1/1 passing** (`npx playwright test`,
+  ~8-10s). `npx vitest run` still green — **135/135 Vitest passing, 20 files** (`vitest.config.ts` `exclude`
+  was extended with `e2e/**` defensively; its `include` glob was already scoped to `src/**/__tests__` so
+  Vitest never actually picked up the Playwright specs, but the explicit exclude documents the intent and
+  guards against a future `include` change). `npx tsc --noEmit` clean.
+  One real flake was hit and diagnosed during verification, not from this spec: a concurrent frontend-agent
+  edit briefly left `src/components/runs/StepCard.tsx` with unbalanced JSX (`Expected corresponding JSX
+  closing tag for <motion.div>`), which made the whole Next.js dev server 500 on every route for about a
+  minute; the suite's own `beforeAll` reachability check caught it with a clear message rather than an
+  opaque per-assertion timeout, and re-running after the file settled passed cleanly (twice, back to back).
+  Separately, `npm run lint` currently reports one pre-existing error (`react-hooks/set-state-in-effect` in
+  `src/lib/motion.ts`) and a few unused-import warnings in `src/app/runs/page.tsx` — both files are mid-edit
+  by the concurrent animations work, outside this task's ownership (`e2e/**`, `playwright.config.ts`,
+  `package.json` scripts/devDeps, `vitest.config.ts` exclude, this file, `docs/CHANGELOG.md`), and were not
+  introduced by this change; not fixed here, flagged for whoever owns those files.
 - **109/109 Vitest tests passing** (`npx vitest run`), `npx tsc --noEmit` clean, `npm run lint` clean (0 errors, 0 warnings).
 - Started from 62 passing tests (executors/evaluators/runner/providers/format). Added 47 tests across 8 new files closing the two named gaps: API route-handler coverage and several evaluator/runner edge cases.
 - New test files:
