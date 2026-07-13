@@ -1,0 +1,17 @@
+# Secrets — never commit
+.env
+.env.*
+!.env.example
+
+# OS / editor noise
+.DS_Store
+*.swp
+.idea/
+.vscode/
+
+# Dependency / build artifacts (in case this dir is ever also used to build)
+node_modules/
+dist/
+build/
+__pycache__/
+*.pyc

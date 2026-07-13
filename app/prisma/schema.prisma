@@ -1,0 +1,152 @@
+// Prisma schema for AgentOps Command Center
+// See docs/DATA_MODEL.md for the source-of-truth data model design.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
+
+enum StepType {
+  llm_prompt
+  tool_api
+  transform
+  approval
+  eval
+}
+
+enum RunStatus {
+  queued
+  running
+  awaiting_approval
+  succeeded
+  failed
+  canceled
+}
+
+enum StepStatus {
+  pending
+  running
+  awaiting_approval
+  succeeded
+  failed
+  skipped
+}
+
+enum EvaluatorType {
+  deterministic
+  rubric
+  llm_judge
+}
+
+// ---------------------------------------------------------------------------
+// Models
+// ---------------------------------------------------------------------------
+
+/// A workflow definition: an ordered list of steps, run zero or more times.
+model Workflow {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  steps WorkflowStep[]
+  runs  Run[]
+
+  @@map("workflows")
+}
+
+/// One ordered step within a workflow's definition.
+model WorkflowStep {
+  id         String   @id @default(cuid())
+  workflowId String
+  position   Int
+  type       StepType
+  name       String
+  config     Json     @default("{}")
+
+  workflow   Workflow        @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  executions StepExecution[]
+
+  @@unique([workflowId, position])
+  @@index([workflowId])
+  @@map("workflow_steps")
+}
+
+/// A single execution of a workflow (triggered via POST /api/runs).
+model Run {
+  id           String    @id @default(cuid())
+  workflowId   String
+  status       RunStatus @default(queued)
+  input        Json      @default("{}")
+  output       Json?
+  errorMessage String?
+  startedAt    DateTime?
+  finishedAt   DateTime?
+  latencyMs    Int?
+  createdAt    DateTime  @default(now())
+
+  workflow    Workflow          @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  steps       StepExecution[]
+  evaluations EvaluationResult[]
+
+  @@index([workflowId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("runs")
+}
+
+/// The execution trace of a single step within a run.
+model StepExecution {
+  id                String     @id @default(cuid())
+  runId             String
+  stepId            String
+  position          Int
+  status            StepStatus @default(pending)
+  input             Json?
+  output            Json?
+  errorMessage      String?
+  retryCount        Int        @default(0)
+  latencyMs         Int?
+  tokensIn          Int?
+  tokensOut         Int?
+  costEstimate      Decimal?   @db.Decimal(10, 6)
+  approvalDecidedAt DateTime?
+  createdAt         DateTime   @default(now())
+
+  run         Run                @relation(fields: [runId], references: [id], onDelete: Cascade)
+  step        WorkflowStep       @relation(fields: [stepId], references: [id], onDelete: Cascade)
+  evaluations EvaluationResult[]
+
+  @@index([runId])
+  @@index([runId, position])
+  @@index([status])
+  @@map("step_executions")
+}
+
+/// A scored evaluation of a run (or, optionally, a single step within a run).
+model EvaluationResult {
+  id              String        @id @default(cuid())
+  runId           String
+  stepExecutionId String?
+  evaluatorType   EvaluatorType
+  score           Float
+  passed          Boolean
+  details         Json          @default("{}")
+  createdAt       DateTime      @default(now())
+
+  run           Run            @relation(fields: [runId], references: [id], onDelete: Cascade)
+  stepExecution StepExecution? @relation(fields: [stepExecutionId], references: [id], onDelete: Cascade)
+
+  @@index([runId])
+  @@index([stepExecutionId])
+  @@index([evaluatorType])
+  @@map("evaluation_results")
+}
